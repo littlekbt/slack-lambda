@@ -1,3 +1,3 @@
 package dockercli
 
-func Rmi(imageID string) bool {}
+// func Rmi(imageID string) bool {}

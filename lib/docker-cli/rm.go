@@ -1,3 +1,3 @@
 package dockercli
 
-func Rm(containerID string) bool {}
+// func Rm(containerID string) bool {}

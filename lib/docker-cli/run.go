@@ -1,4 +1,4 @@
 package dockercli
 
 // return stdout
-func Run(imageId int) string {}
+// func Run(imageId int) string {}
