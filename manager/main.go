@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"../docker-cli"
 )
 
 // In is request body
@@ -64,9 +66,18 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 
 	// inputの内容でgoroutineを作る
 	// pipeで繋ぐ
+	//    コンテナ起動
+	//         |
+	//        実行
+	//   |            |
+	// 結果受け取り コンテナ停止
 
-	// コンテナ起動
-	// 実行
-	// 結果受け取り
-	// コンテナ停止
+	ch := make(<-chan string)
+
+	func() {
+		container := dockerCli.BuildAndStart(in.Language, in.Version, in.Code)
+		ch = dockerCli.ExecuteAndStop(container)
+	}()
+
+	out.Stdout = <-ch
 }
