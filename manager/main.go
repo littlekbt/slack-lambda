@@ -71,13 +71,7 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 	// run container(& remove)
 	//       |
 	// recept stdout
-
-	stdout := make(<-chan string)
-
-	go func() {
-		image := dockerCli.Build(in.Language, in.Version, in.Code)
-		stdout = dockerCli.Run(image)
-	}()
-
+	image := dockerCli.Build(in.Language, in.Version, in.Code)
+	stdout := dockerCli.Run(image)
 	out.Stdout = <-stdout
 }
