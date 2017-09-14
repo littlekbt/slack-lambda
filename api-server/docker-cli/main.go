@@ -5,14 +5,15 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"time"
 )
 
 var langToCommand = map[string]string{
-	"ruby":   "\"ruby\"",
-	"Ruby":   "\"ruby\"",
-	"go":     "\"go\",\"run\"",
-	"golang": "\"go\",\"run\"",
+	"ruby":   `"ruby"`,
+	"Ruby":   `"ruby"`,
+	"go":     `"go", "run"`,
+	"golang": `"go", "run"`,
 }
 
 var langToExt = map[string]string{
@@ -36,17 +37,17 @@ func init() {
 }
 
 // Build image
-func Build(lang, version, code string) <-chan string {
+func Build(lang, version, program string) <-chan string {
 	container := make(chan string)
 	go func() {
-		uuid := fmt.Sprintf("%d_%s", time.Now().Unix(), code[0:5])
+		uuid := fmt.Sprintf("%d_%s", time.Now().Unix(), strings.Replace(program[0:5], " ", "", -1))
 
 		dir, err := mkDirP(uuid)
 		if err != nil {
 			panic("fail mkdir")
 		}
 
-		programfile, err := createTmpProgramFile(dir, lang, code)
+		programfile, err := createTmpProgramFile(dir, lang, program)
 		if err != nil {
 			panic("fail create program file")
 		}
@@ -80,26 +81,11 @@ func Run(image <-chan string) chan string {
 		stdout <- out
 
 		// side effects...
+		// 先に親が終わって残らない？
 		clear(imageName)
 	}()
 
 	return stdout
-}
-
-// clear removes container, image, files
-func clear(image string) {
-	err1 := exec.Command("sh", "-c", fmt.Sprintf("docker rm -f `docker ps -a | grep %s | awk '{print $1}'`", image)).Run()
-	if err1 != nil {
-		panic(err1.Error())
-	}
-	err2 := exec.Command("sh", "-c", fmt.Sprintf("docker rmi -f `docker images | grep %s | awk '{print $3}'`", image)).Run()
-	if err2 != nil {
-		panic(err2.Error())
-	}
-	err3 := os.RemoveAll(path.Join("/tmp", image))
-	if err3 != nil {
-		panic(err3.Error())
-	}
 }
 
 // return directory
@@ -114,7 +100,7 @@ func mkDirP(uuid string) (string, error) {
 }
 
 // return programfile path
-func createTmpProgramFile(dir, lang, code string) (string, error) {
+func createTmpProgramFile(dir, lang, program string) (string, error) {
 	ext := langToExt[lang]
 	filepath := path.Join(dir, fmt.Sprintf("program.%s", ext))
 
@@ -124,7 +110,7 @@ func createTmpProgramFile(dir, lang, code string) (string, error) {
 	}
 	defer file.Close()
 
-	file.Write([]byte(code))
+	file.Write([]byte(program))
 
 	return filepath, nil
 }
@@ -177,4 +163,20 @@ func run(image string) (string, error) {
 	}
 
 	return string(out), nil
+}
+
+// clear removes container, image, files
+func clear(image string) {
+	err1 := exec.Command("sh", "-c", fmt.Sprintf("docker rm -f `docker ps -a | grep %s | awk '{print $1}'`", image)).Run()
+	if err1 != nil {
+		panic(err1.Error())
+	}
+	err2 := exec.Command("sh", "-c", fmt.Sprintf("docker rmi -f `docker images | grep %s | awk '{print $3}'`", image)).Run()
+	if err2 != nil {
+		panic(err2.Error())
+	}
+	err3 := os.RemoveAll(path.Join("/tmp", image))
+	if err3 != nil {
+		panic(err3.Error())
+	}
 }

@@ -1,12 +1,5 @@
 package manager
 
-// jobの管理/コンテナの管理を行う。
-// apiサーバーとしても動作
-
-// リクエストを受け取り、コンテナを選択し、jobを実行する(goroutine)(チャンネルで待つ。)
-// goroutine内でコンテナを起動し、コードの実行、結果をチャンネル経由で渡す
-// リクエストを返す
-
 import (
 	"encoding/json"
 	"fmt"
@@ -20,7 +13,7 @@ import (
 type In struct {
 	Language string `json:"language"`
 	Version  string `json:"version"`
-	Code     string `json:"code"`
+	Program  string `json:"program"`
 }
 
 // Out is response body
@@ -71,7 +64,7 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 	// run container(& remove)
 	//       |
 	// recept stdout
-	image := dockerCli.Build(in.Language, in.Version, in.Code)
+	image := dockerCli.Build(in.Language, in.Version, in.Program)
 	stdout := dockerCli.Run(image)
 	out.Stdout = <-stdout
 }

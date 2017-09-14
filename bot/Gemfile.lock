@@ -1,0 +1,24 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    event_emitter (0.2.6)
+    faraday (0.11.0)
+      multipart-post (>= 1.2, < 3)
+    multipart-post (2.0.0)
+    slack-rtm-bot-helper (0.1.3)
+      faraday (~> 0.11.0)
+      websocket-client-simple (~> 0.3.0)
+    websocket (1.2.4)
+    websocket-client-simple (0.3.0)
+      event_emitter
+      websocket
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  faraday
+  slack-rtm-bot-helper
+
+BUNDLED WITH
+   1.15.4
