@@ -1,37 +1,169 @@
 package dockerCli
 
-import ()
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path"
+	"time"
+)
 
-// BuildAndStart is
-func BuildAndStart(lang, version, code string) <-chan string {
+var langToCommand = map[string]string{
+	"ruby":   "\"ruby\"",
+	"Ruby":   "\"ruby\"",
+	"go":     "\"go\",\"run\"",
+	"golang": "\"go\",\"run\"",
+}
+
+var langToExt = map[string]string{
+	"ruby":   "rb",
+	"golang": "go",
+}
+
+var langToImageName = map[string]string{
+	"ruby":   "ruby",
+	"Ruby":   "ruby",
+	"go":     "golang",
+	"golang": "golang",
+}
+
+func init() {
+	_, err := exec.LookPath("docker")
+
+	if err != nil {
+		panic("not found docker command")
+	}
+}
+
+// BuildAndRun is build image and run container
+func BuildAndRun(lang, version, code string) <-chan string {
 	container := make(chan string)
 	go func() {
-		image := build(lang, version, code)
-		con := start(image)
+		uuid := fmt.Sprintf("%d_%s", time.Now().Unix(), code[0:5])
+
+		dir, err := mkDirP(uuid)
+		if err != nil {
+			panic("fail mkdir")
+		}
+
+		programfile, err := createTmpProgramFile(dir, lang, code)
+		if err != nil {
+			panic("fail create program file")
+		}
+
+		dockerfile, err := createTmpDockerFile(dir, lang, version, programfile)
+		if err != nil {
+			panic("fail create Dockerfile")
+		}
+
+		image, err := build(path.Dir(dockerfile), uuid)
+		if err != nil {
+			panic("fail build image")
+		}
+
+		con, err := run(image)
+		if err != nil {
+			panic("fail run container")
+		}
+
 		container <- con
 		close(container)
 	}()
+
 	return container
 }
 
 // ExecuteAndStop is
-func ExecuteAndStop(container <-chan string) <-chan string {
-	stdout := make(chan string)
+// func ExecuteAndStop(container <-chan string) <-chan string {
+// 	stdout := make(chan string)
+//
+// 	go func() {
+// 		con := <-container
+// 		stdout <- execute(con)
+// 		stop(con)
+// 		close(stdout)
+// 	}()
+//
+// 	return stdout
+// }
 
-	go func() {
-		con := <-container
-		stdout <- execute(con)
-		stop(con)
-		close(stdout)
-	}()
+// return directory
+func mkDirP(uuid string) (string, error) {
+	dir := fmt.Sprintf("/tmp/slack-lambda/%s", uuid)
+	err := os.MkdirAll(dir, 0777)
+	if err != nil {
+		return "", err
+	}
 
-	return stdout
+	return dir, nil
 }
 
-func build(lang, version, code string) {}
+// return programfile path
+func createTmpProgramFile(dir, lang, code string) (string, error) {
+	ext := langToExt[lang]
+	filepath := path.Join(dir, fmt.Sprintf("program.%s", ext))
 
-func start(image string) string {}
+	file, err := os.Create(filepath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
 
-func stop(container string) int {}
+	file.Write([]byte(code))
 
-func execute(container string) string {}
+	return filepath, nil
+}
+
+// return dockerfile path
+func createTmpDockerFile(dir, lang, version, programfilePath string) (string, error) {
+	dockerfilepath := path.Join(dir, "Dockerfile")
+
+	file, err := os.Create(dockerfilepath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	langCmd := langToCommand[lang]
+	ext := langToExt[lang]
+	image := langToImageName[lang]
+	baseimage := fmt.Sprintf("%s:%s", image, version)
+
+	dockerfile := fmt.Sprintf(`
+FROM %s
+
+WORKDIR /src
+
+COPY . .
+
+CMD [%s, "program.%s"]
+  `, baseimage, langCmd, ext)
+
+	file.Write([]byte(dockerfile))
+
+	return dockerfilepath, nil
+}
+
+func build(dir, uuid string) (string, error) {
+	image := fmt.Sprintf("slack-lambda/%s", uuid)
+	err := exec.Command("docker", "build", dir, "-t", image).Run()
+	if err != nil {
+		fmt.Println(err.Error())
+		return "", err
+	}
+
+	return image, nil
+}
+
+func run(image string) (string, error) {
+	out, err := exec.Command("docker", "run", image).Output()
+	if err != nil {
+		return "", err
+	}
+
+	return string(out), nil
+}
+
+// func stop(container string) int {}
+
+// func execute(container string) string {}

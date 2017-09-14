@@ -20,13 +20,13 @@ import (
 type In struct {
 	Language string `json:"language"`
 	Version  string `json:"version"`
-	Code     string `json:"Code"`
+	Code     string `json:"code"`
 }
 
 // Out is response body
 type Out struct {
-	Stdout string `json:"Stdout"`
-	Error  string `json:"Error"`
+	Stdout string `json:"stdout"`
+	Error  string `json:"error"`
 }
 
 // ContainerHandler execute job
@@ -47,7 +47,7 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	if r.Method != "POST" {
-		out.Error = "request is only post"
+		out.Error = "can use only post method"
 		return
 	}
 
@@ -74,7 +74,7 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 
 	ch := make(<-chan string)
 
-	func() {
+	go func() {
 		container := dockerCli.BuildAndStart(in.Language, in.Version, in.Code)
 		ch = dockerCli.ExecuteAndStop(container)
 	}()
