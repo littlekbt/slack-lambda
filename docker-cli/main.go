@@ -35,7 +35,7 @@ func init() {
 	}
 }
 
-// Build is build image
+// Build image
 func Build(lang, version, code string) <-chan string {
 	container := make(chan string)
 	go func() {
@@ -68,33 +68,39 @@ func Build(lang, version, code string) <-chan string {
 	return container
 }
 
-// Run is execute container
+// Run executes container
 func Run(image <-chan string) chan string {
 	stdout := make(chan string)
 	go func() {
-		out, err := run(<-image)
+		imageName := <-image
+		out, err := run(imageName)
 		if err != nil {
 			panic("fail run container")
 		}
 		stdout <- out
+
+		// side effects...
+		clear(imageName)
 	}()
 
 	return stdout
 }
 
-// ExecuteAndStop is
-// func ExecuteAndStop(container <-chan string) <-chan string {
-// 	stdout := make(chan string)
-//
-// 	go func() {
-// 		con := <-container
-// 		stdout <- execute(con)
-// 		stop(con)
-// 		close(stdout)
-// 	}()
-//
-// 	return stdout
-// }
+// clear removes container, image, files
+func clear(image string) {
+	err1 := exec.Command("sh", "-c", fmt.Sprintf("docker rm -f `docker ps -a | grep %s | awk '{print $1}'`", image)).Run()
+	if err1 != nil {
+		panic(err1.Error())
+	}
+	err2 := exec.Command("sh", "-c", fmt.Sprintf("docker rmi -f `docker images | grep %s | awk '{print $3}'`", image)).Run()
+	if err2 != nil {
+		panic(err2.Error())
+	}
+	err3 := os.RemoveAll(path.Join("/tmp", image))
+	if err3 != nil {
+		panic(err3.Error())
+	}
+}
 
 // return directory
 func mkDirP(uuid string) (string, error) {
@@ -172,7 +178,3 @@ func run(image string) (string, error) {
 
 	return string(out), nil
 }
-
-// func stop(container string) int {}
-
-// func execute(container string) string {}

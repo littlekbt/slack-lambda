@@ -64,20 +64,19 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// inputの内容でgoroutineを作る
-	// pipeで繋ぐ
-	//    コンテナ起動
-	//         |
-	//        実行
-	//   |            |
-	// 結果受け取り コンテナ停止
+	// pipeline
+	//
+	//  build image
+	//       |
+	// run container(& remove)
+	//       |
+	// recept stdout
 
 	stdout := make(<-chan string)
 
 	go func() {
 		image := dockerCli.Build(in.Language, in.Version, in.Code)
 		stdout = dockerCli.Run(image)
-		// TODO clear
 	}()
 
 	out.Stdout = <-stdout
