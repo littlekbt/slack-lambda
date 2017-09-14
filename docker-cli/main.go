@@ -35,8 +35,8 @@ func init() {
 	}
 }
 
-// BuildAndRun is build image and run container
-func BuildAndRun(lang, version, code string) <-chan string {
+// Build is build image
+func Build(lang, version, code string) <-chan string {
 	container := make(chan string)
 	go func() {
 		uuid := fmt.Sprintf("%d_%s", time.Now().Unix(), code[0:5])
@@ -61,16 +61,25 @@ func BuildAndRun(lang, version, code string) <-chan string {
 			panic("fail build image")
 		}
 
-		con, err := run(image)
-		if err != nil {
-			panic("fail run container")
-		}
-
-		container <- con
+		container <- image
 		close(container)
 	}()
 
 	return container
+}
+
+// Run is execute container
+func Run(image <-chan string) chan string {
+	stdout := make(chan string)
+	go func() {
+		out, err := run(<-image)
+		if err != nil {
+			panic("fail run container")
+		}
+		stdout <- out
+	}()
+
+	return stdout
 }
 
 // ExecuteAndStop is

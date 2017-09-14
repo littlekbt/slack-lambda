@@ -72,12 +72,13 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 	//   |            |
 	// 結果受け取り コンテナ停止
 
-	ch := make(<-chan string)
+	stdout := make(<-chan string)
 
 	go func() {
-		container := dockerCli.BuildAndStart(in.Language, in.Version, in.Code)
-		ch = dockerCli.ExecuteAndStop(container)
+		image := dockerCli.Build(in.Language, in.Version, in.Code)
+		stdout = dockerCli.Run(image)
+		// TODO clear
 	}()
 
-	out.Stdout = <-ch
+	out.Stdout = <-stdout
 }
