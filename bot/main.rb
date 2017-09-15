@@ -1,5 +1,6 @@
 require 'slack-rtm-bot-helper'
 require 'faraday'
+require 'json'
 
 class SlackLambda
   REGEXP = /language:\s?.*\nversion:\s?.*\n```\n?[\s\S]*\n?```/
@@ -7,17 +8,6 @@ class SlackLambda
   def initialize(token)
     @token = token
   end
-
-  # def self.run
-  #   conn = Faraday.new(:url => 'http://localhost:8080') do |faraday|
-  #     faraday.request  :url_encoded             # form-encode POST params
-  #     faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
-  #   end
-
-  #   res = conn.post do |req|
-  #     req.body = "language: ruby"
-  #   end
-  # end
 
   def run
     Slack::Rtm::Bot::Helper.run(token=@token) do |data|
@@ -33,7 +23,8 @@ class SlackLambda
         req.body = text
       end
 
-      res.body
+      j = JSON.parse(res.body)
+      j['stdout']
     end
   end
 
@@ -41,6 +32,13 @@ class SlackLambda
 
   def valid(text)
     text.match?(REGEXP)
+  end
+
+  def output_error(err_msg)
+    <<ERR
+    Error Found!
+    #{err_msg}
+ERR
   end
 end
 
