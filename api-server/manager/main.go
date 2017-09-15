@@ -19,7 +19,6 @@ type In struct {
 // Out is response body
 type Out struct {
 	Stdout string `json:"stdout"`
-	Error  string `json:"error"`
 }
 
 // ContainerHandler execute job
@@ -40,20 +39,18 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	if r.Method != "POST" {
-		out.Error = "can use only post method"
+		w.WriteHeader(405)
+		fmt.Fprint(w, "invalid method")
 		return
 	}
 
-	body, e := ioutil.ReadAll(r.Body)
-	if e != nil {
-		out.Error = e.Error()
-		return
-	}
+	body, _ := ioutil.ReadAll(r.Body)
 
 	in := In{}
-	e = json.Unmarshal(body, &in)
+	e := json.Unmarshal(body, &in)
 	if e != nil {
-		out.Error = e.Error()
+		w.WriteHeader(400)
+		fmt.Fprint(w, "invalid request paramter")
 		return
 	}
 
