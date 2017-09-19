@@ -1,12 +1,12 @@
 package dockerCli
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
-	"strings"
-	"time"
 )
 
 var langToCommand = map[string]string{
@@ -37,55 +37,80 @@ func init() {
 }
 
 // Build image
-func Build(lang, version, program string) <-chan string {
+func Build(ctx context.Context, imageID, lang, version, program string) (<-chan string, chan error) {
 	container := make(chan string)
+	errCh := make(chan error)
 	go func() {
-		uuid := fmt.Sprintf("%d_%s", time.Now().Unix(), strings.Replace(program[0:5], " ", "", -1))
-
-		dir, err := mkDirP(uuid)
+		dir, err := mkDirP(imageID)
 		if err != nil {
-			panic("fail mkdir")
+			errCh <- errors.New("fail mkdir")
 		}
 
 		programfile, err := createTmpProgramFile(dir, lang, program)
 		if err != nil {
-			panic("fail create program file")
+			errCh <- errors.New("fail create program file")
 		}
 
 		dockerfile, err := createTmpDockerFile(dir, lang, version, programfile)
 		if err != nil {
-			panic("fail create Dockerfile")
+			errCh <- errors.New("fail create Dockerfile")
 		}
 
-		image, err := build(path.Dir(dockerfile), uuid)
+		image, err := build(path.Dir(dockerfile), imageID)
 		if err != nil {
-			panic("fail build image")
+			errCh <- errors.New("fail build image")
 		}
 
-		container <- image
-		close(container)
+		select {
+		case <-ctx.Done():
+			errCh <- errors.New("timeout")
+			return
+		case container <- image:
+			close(container)
+		}
 	}()
 
-	return container
+	return container, errCh
 }
 
 // Run executes container
-func Run(image <-chan string) chan string {
+func Run(ctx context.Context, image <-chan string) (<-chan string, chan error) {
 	stdout := make(chan string)
+	errCh := make(chan error)
 	go func() {
 		imageName := <-image
 		out, err := run(imageName)
 		if err != nil {
-			panic("fail run container")
+			errCh <- errors.New("fail run container")
 		}
-		stdout <- out
 
-		// side effects...
-		// 先に親が終わって残らない？
-		clear(imageName)
+		select {
+		case <-ctx.Done():
+			errCh <- errors.New("timeout")
+			return
+		case stdout <- out:
+			close(stdout)
+		}
 	}()
 
-	return stdout
+	return stdout, errCh
+}
+
+// Clear removes container, image, files
+func Clear(imageID string) error {
+	err1 := exec.Command("sh", "-c", fmt.Sprintf("docker rm -f `docker ps -a | grep %s | awk '{print $1}'`", imageID)).Run()
+	if err1 != nil {
+		return err1
+	}
+	err2 := exec.Command("sh", "-c", fmt.Sprintf("docker rmi -f `docker images | grep %s | awk '{print $3}'`", imageID)).Run()
+	if err2 != nil {
+		return err2
+	}
+	err3 := os.RemoveAll(path.Join("/tmp", imageID))
+	if err3 != nil {
+		return err3
+	}
+	return nil
 }
 
 // return directory
@@ -163,20 +188,4 @@ func run(image string) (string, error) {
 	}
 
 	return string(out), nil
-}
-
-// clear removes container, image, files
-func clear(image string) {
-	err1 := exec.Command("sh", "-c", fmt.Sprintf("docker rm -f `docker ps -a | grep %s | awk '{print $1}'`", image)).Run()
-	if err1 != nil {
-		panic(err1.Error())
-	}
-	err2 := exec.Command("sh", "-c", fmt.Sprintf("docker rmi -f `docker images | grep %s | awk '{print $3}'`", image)).Run()
-	if err2 != nil {
-		panic(err2.Error())
-	}
-	err3 := os.RemoveAll(path.Join("/tmp", image))
-	if err3 != nil {
-		panic(err3.Error())
-	}
 }
