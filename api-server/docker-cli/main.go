@@ -40,6 +40,7 @@ func init() {
 func Build(ctx context.Context, imageID, lang, version, program string) (<-chan string, chan error) {
 	container := make(chan string)
 	errCh := make(chan error)
+
 	go func() {
 		dir, err := mkDirP(imageID)
 		if err != nil {
@@ -58,7 +59,7 @@ func Build(ctx context.Context, imageID, lang, version, program string) (<-chan 
 
 		image, err := build(path.Dir(dockerfile), imageID)
 		if err != nil {
-			errCh <- errors.New("fail build image")
+			errCh <- errors.New("fail build image. stderr message: " + err.Error())
 		}
 
 		select {
@@ -77,11 +78,12 @@ func Build(ctx context.Context, imageID, lang, version, program string) (<-chan 
 func Run(ctx context.Context, image <-chan string) (<-chan string, chan error) {
 	stdout := make(chan string)
 	errCh := make(chan error)
+
 	go func() {
 		imageName := <-image
 		out, err := run(imageName)
 		if err != nil {
-			errCh <- errors.New("fail run container")
+			errCh <- errors.New("fail run container. stderr message: " + err.Error())
 		}
 
 		select {
@@ -110,6 +112,7 @@ func Clear(imageID string) error {
 	if err3 != nil {
 		return err3
 	}
+
 	return nil
 }
 

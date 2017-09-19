@@ -51,7 +51,7 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body, _ := ioutil.ReadAll(r.Body)
-	log("response: " + string(body))
+	log("request: " + string(body))
 
 	in := In{}
 	e := json.Unmarshal(body, &in)

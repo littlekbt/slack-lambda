@@ -29,11 +29,7 @@ class SlackLambda
       puts "#{Time.now().to_s} <- #{res.body}"
 
       j = JSON.parse(res.body)
-      if j['error'] == ''
-        j['stdout']
-      else
-        output_error(j['error'])
-      end
+      j['error'] != '' ? output_error(j['error']) : j['stdout']
     end
     puts "#{[Time.now().to_s]} close web socket connection"
   end
