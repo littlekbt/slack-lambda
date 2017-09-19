@@ -69,10 +69,8 @@ func ContainerHandler(w http.ResponseWriter, r *http.Request) {
 	// run container
 	//       |
 	// recept stdout
-
-	// TODO: Context入れてtimeoutなどの親からのキャンセル処理を実装
 	imageID := fmt.Sprintf("%d", time.Now().Unix())
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	image, errorCh1 := dockerCli.Build(ctx, imageID, in.Language, in.Version, in.Program)
