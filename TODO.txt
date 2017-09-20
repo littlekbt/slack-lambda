@@ -1,3 +1,2 @@
-botにto_meを入れる
 proxy-serverのタイムアウト and リソース回収
 build script

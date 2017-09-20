@@ -1,13 +1,20 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    coderay (1.1.2)
     event_emitter (0.2.6)
     faraday (0.11.0)
       multipart-post (>= 1.2, < 3)
+    method_source (0.8.2)
     multipart-post (2.0.0)
+    pry (0.10.4)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
     slack-rtm-bot-helper (1.0.1)
       faraday (~> 0.11.0)
       websocket-client-simple (~> 0.3.0)
+    slop (3.6.0)
     websocket (1.2.4)
     websocket-client-simple (0.3.0)
       event_emitter
@@ -18,6 +25,7 @@ PLATFORMS
 
 DEPENDENCIES
   faraday
+  pry
   slack-rtm-bot-helper
 
 BUNDLED WITH
