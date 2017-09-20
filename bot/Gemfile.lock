@@ -5,7 +5,7 @@ GEM
     faraday (0.11.0)
       multipart-post (>= 1.2, < 3)
     multipart-post (2.0.0)
-    slack-rtm-bot-helper (0.1.3)
+    slack-rtm-bot-helper (1.0.1)
       faraday (~> 0.11.0)
       websocket-client-simple (~> 0.3.0)
     websocket (1.2.4)
