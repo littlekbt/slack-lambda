@@ -6,7 +6,7 @@ class SlackLambdaBot
     REMOVE_REGEXP   = />\s*remove\s*([a-z|A-Z|0-9|_|-]*)/
     RUN_REGEXP      = />\s*run\s*([a-z|A-Z|0-9|_|-]*)/
 
-    FILE_PATH = Pathname.new("./storage/user_files/")
+    FILE_PATH = Pathname.new("../storage/user_files/")
 
     class << self
       def register(text)
@@ -65,7 +65,7 @@ class SlackLambdaBot
           return "#{name} not found" unless File.exist?(to_s_path(name))
 
           t = File.read(to_s_path(name)) 
-          PostConverter.post(t)
+          PostProxy.post(t)
         end
       end
 
