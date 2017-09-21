@@ -83,7 +83,7 @@ func Run(ctx context.Context, image <-chan string) (<-chan string, chan error) {
 		imageName := <-image
 		out, err := run(imageName)
 		if err != nil {
-			errCh <- errors.New("fail run container. stderr message: " + err.Error())
+			errCh <- errors.New("fail run container.\n Error message: " + out)
 		}
 
 		select {
@@ -185,9 +185,9 @@ func build(dir, uuid string) (string, error) {
 }
 
 func run(image string) (string, error) {
-	out, err := exec.Command("docker", "run", image).Output()
+	out, err := exec.Command("sh", "-c", fmt.Sprintf("docker run %s 2>&1", image)).Output()
 	if err != nil {
-		return "", err
+		return string(out), err
 	}
 
 	return string(out), nil
