@@ -1,4 +1,5 @@
 class SlackLambdaBot
+  include MessageConverter
   NAME = 'slack-lambda'
 
   CONVERT_TO_ACTION_SYM = {
@@ -20,6 +21,9 @@ class SlackLambdaBot
     puts "#{[Time.now().to_s]} open web socket connection"
     Slack::Rtm::Bot::Helper.run(token: @token, name: @name) do |data|
       text = data['text']
+      p text
+      text = convert_program(text)
+      p text
       case extract_action(text)
       when :register
         UserFile.register(text)
