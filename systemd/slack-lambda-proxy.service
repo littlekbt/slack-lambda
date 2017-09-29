@@ -1,0 +1,15 @@
+[Unit]
+Description=Lambda System on Slack Proxy Server
+After=slack-lambda-container-server.service
+ 
+[Service]
+Type=simple
+ExecStart=/usr/local/src/slack-lambda/bin/proxy-server
+ExecStop=/bin/kill ${MAINPID}
+KillSignal=SIGCONT
+PrivateTmp=true
+User=kubota_yuki
+Group=docker
+ 
+[Install]
+WantedBy=multi-user.target

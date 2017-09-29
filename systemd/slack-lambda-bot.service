@@ -1,0 +1,16 @@
+[Unit]
+Description=Lambda System on Slack Interface
+After=slack-lambda-proxy-server.service
+ 
+[Service]
+Type=simple
+EnvironmentFile=/usr/local/src/slack-lambda/bot/config/vars
+ExecStart=/home/kubota_yuki/.rbenv/bin/rbenv exec bundle exec ruby /usr/local/src/slack-lambda/bot/main.rb
+ExecStop=/bin/kill ${MAINPID}
+KillSignal=SIGCONT
+PrivateTmp=true
+User=kubota_yuki
+Group=docker
+ 
+[Install]
+WantedBy=multi-user.target

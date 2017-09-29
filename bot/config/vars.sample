@@ -1,0 +1,4 @@
+BUNDLE_GEMFILE=/path/to/slack-lambda/bot/Gemfile
+STORAGE_PATH=/path/to/src/slack-lambda/storage
+SLACK_LAMBDA_BOT_PATH=/path/to/slack-lambda/bot
+SLACK_LAMBDA_TOKEN=<<slack token here>>
