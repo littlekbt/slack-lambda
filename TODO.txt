@@ -1,4 +1,0 @@
-pwdの結果をbotに与えて、storageのパスを作る
-proxy-serverのタイムアウト and リソース回収
-build script
-TEST!!
