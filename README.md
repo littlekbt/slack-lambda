@@ -27,4 +27,14 @@ The one is proxy server that converts request body to json and posts it to lambd
 The one is lambda server that build image and run container.
 
 ```
+$ git clone https://github.com/littlekbt/slack-lambda
+$ cd slack-lambda
+$ make build
+// create binary proxy server and lambda server
+$ make install
+// create symbolic link to /etc/systemd/system
+$ vim bot/config/vars
+// you must write vars used by bot
+$ make run
+// start! 
 ```
