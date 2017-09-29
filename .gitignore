@@ -1,7 +1,6 @@
 /bot/vendor
-/storage
+/storage/*
 !/storage/.keep
 /nohup.out
 /bot/config/vars
-/bot/storage
 /bin
